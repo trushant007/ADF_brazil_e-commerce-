@@ -1,0 +1,22 @@
+{
+	"name": "ADLS_Bronze_Binary",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ADLS_bronze",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "Binary",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"folderPath": {
+					"value": "@pipeline().parameters.folder",
+					"type": "Expression"
+				},
+				"fileSystem": "bronze"
+			}
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

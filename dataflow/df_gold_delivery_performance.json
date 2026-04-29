@@ -1,0 +1,85 @@
+{
+	"name": "df_gold_delivery_performance",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "silver_order_enriched",
+						"type": "DatasetReference"
+					},
+					"name": "source1"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "DS_agg_delivery_performance",
+						"type": "DatasetReference"
+					},
+					"name": "sink1"
+				}
+			],
+			"transformations": [
+				{
+					"name": "select1"
+				},
+				{
+					"name": "filter1"
+				},
+				{
+					"name": "aggregate1"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          order_id as string,",
+				"          customer_id as string,",
+				"          product_id as string,",
+				"          customer_city as string,",
+				"          customer_state as string,",
+				"          review_score as integer,",
+				"          delivery_days as integer,",
+				"          delay_days as integer,",
+				"          total_amount as decimal(13,2),",
+				"          order_date as date,",
+				"          data_issue_flag as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false,",
+				"     format: 'parquet') ~> source1",
+				"source1 select(mapColumn(",
+				"          delivery_days,",
+				"          delay_days,",
+				"          order_date,",
+				"          data_issue_flag",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> select1",
+				"select1 filter(data_issue_flag!='valid') ~> filter1",
+				"filter1 aggregate(groupBy(order_date),",
+				"     avg_delivery_days = avg(delivery_days),",
+				"          avg_delay_days = avg(delay_days),",
+				"          on_time_percentage = 100 * avg(iif(delay_days <= 0, 1, 0))) ~> aggregate1",
+				"aggregate1 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          order_date as date,",
+				"          avg_delivery_days as decimal(10,2),",
+				"          avg_delay_days as decimal(10,2),",
+				"          on_time_percentage as decimal(5,2)",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError') ~> sink1"
+			]
+		}
+	}
+}

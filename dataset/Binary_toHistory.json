@@ -1,0 +1,30 @@
+{
+	"name": "Binary_toHistory",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "LS_toHistory",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"filename_timestamp": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "Binary",
+		"typeProperties": {
+			"location": {
+				"type": "FileServerLocation",
+				"fileName": {
+					"value": "@dataset().filename_timestamp",
+					"type": "Expression"
+				},
+				"folderPath": {
+					"value": "@pipeline().parameters.folder",
+					"type": "Expression"
+				}
+			}
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

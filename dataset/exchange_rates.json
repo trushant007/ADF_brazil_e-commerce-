@@ -1,0 +1,46 @@
+{
+	"name": "exchange_rates",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_db_brazil",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "requested_date",
+				"type": "date"
+			},
+			{
+				"name": "api_date",
+				"type": "date"
+			},
+			{
+				"name": "base_currency",
+				"type": "varchar"
+			},
+			{
+				"name": "target_currency",
+				"type": "varchar"
+			},
+			{
+				"name": "exchange_rate",
+				"type": "decimal",
+				"precision": 12,
+				"scale": 6
+			},
+			{
+				"name": "created_at",
+				"type": "datetime",
+				"precision": 23,
+				"scale": 3
+			}
+		],
+		"typeProperties": {
+			"schema": "dbo",
+			"table": "exchange_rates"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

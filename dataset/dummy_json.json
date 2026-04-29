@@ -1,0 +1,23 @@
+{
+	"name": "dummy_json",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ADLS_bronze",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "Json",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": "empty.json",
+				"folderPath": "Error/dummy",
+				"fileSystem": "silver"
+			}
+		},
+		"schema": {
+			"type": "object"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}
