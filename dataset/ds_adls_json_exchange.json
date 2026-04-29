@@ -1,0 +1,24 @@
+{
+	"name": "ds_adls_json_exchange",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ADLS_bronze",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "Json",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": {
+					"value": "@concat(item().order_date, '.json')",
+					"type": "Expression"
+				},
+				"folderPath": "exchange_rates",
+				"fileSystem": "silver"
+			}
+		},
+		"schema": {}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

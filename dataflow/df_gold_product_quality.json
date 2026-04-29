@@ -1,0 +1,83 @@
+{
+	"name": "df_gold_product_quality",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "silver_order_enriched",
+						"type": "DatasetReference"
+					},
+					"name": "source1"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "ds_agg_product_quality",
+						"type": "DatasetReference"
+					},
+					"name": "sinkAggProductQuality"
+				}
+			],
+			"transformations": [
+				{
+					"name": "filter1"
+				},
+				{
+					"name": "select1"
+				},
+				{
+					"name": "aggregate1"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          order_id as string,",
+				"          customer_id as string,",
+				"          product_id as string,",
+				"          customer_city as string,",
+				"          customer_state as string,",
+				"          review_score as integer,",
+				"          delivery_days as integer,",
+				"          delay_days as integer,",
+				"          total_amount as decimal(13,2),",
+				"          order_date as date,",
+				"          data_issue_flag as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false,",
+				"     format: 'parquet') ~> source1",
+				"select1 filter(data_issue_flag != 'Valid' && !isNull(review_score)) ~> filter1",
+				"source1 select(mapColumn(",
+				"          order_id,",
+				"          product_id,",
+				"          review_score,",
+				"          data_issue_flag",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> select1",
+				"filter1 aggregate(groupBy(product_id),",
+				"     avg_review_score = avg(review_score),",
+				"          total_reviews = count(order_id)) ~> aggregate1",
+				"aggregate1 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          product_id as string,",
+				"          avg_review_score as decimal(3,2),",
+				"          total_reviews as integer",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError') ~> sinkAggProductQuality"
+			]
+		}
+	}
+}

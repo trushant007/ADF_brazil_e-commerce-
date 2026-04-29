@@ -1,0 +1,67 @@
+{
+	"name": "df_gold_daily_metrics",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "fact_sales",
+						"type": "DatasetReference"
+					},
+					"name": "source1"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "agg_daily_metrics",
+						"type": "DatasetReference"
+					},
+					"name": "sinkAggDailyMatrics"
+				}
+			],
+			"transformations": [
+				{
+					"name": "aggregate1"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          order_id as string,",
+				"          order_date as date,",
+				"          customer_id as string,",
+				"          total_amount_usd as decimal(12,2),",
+				"          exchange_rate as decimal(12,6),",
+				"          total_amount_inr as decimal(14,2)",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> source1",
+				"source1 aggregate(groupBy(order_date),",
+				"     total_orders = count(order_id),",
+				"          total_revenue_usd = sum(total_amount_usd),",
+				"          total_revenue_inr = sum(total_amount_inr),",
+				"          avg_order_value = avg(total_amount_usd)) ~> aggregate1",
+				"aggregate1 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          order_date as date,",
+				"          total_orders as integer,",
+				"          total_revenue_usd as decimal(14,2),",
+				"          total_revenue_inr as decimal(14,2),",
+				"          avg_order_value as decimal(14,2)",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError') ~> sinkAggDailyMatrics"
+			]
+		}
+	}
+}

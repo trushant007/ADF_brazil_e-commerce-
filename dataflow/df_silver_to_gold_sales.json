@@ -1,0 +1,129 @@
+{
+	"name": "df_silver_to_gold_sales",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "silver_order_enriched",
+						"type": "DatasetReference"
+					},
+					"name": "source1"
+				},
+				{
+					"dataset": {
+						"referenceName": "exchange_rates",
+						"type": "DatasetReference"
+					},
+					"name": "source2"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "fact_sales",
+						"type": "DatasetReference"
+					},
+					"name": "sinkFactSales"
+				}
+			],
+			"transformations": [
+				{
+					"name": "select1"
+				},
+				{
+					"name": "select2"
+				},
+				{
+					"name": "join1"
+				},
+				{
+					"name": "derivedColumn1"
+				},
+				{
+					"name": "select3"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          order_id as string,",
+				"          customer_id as string,",
+				"          product_id as string,",
+				"          customer_city as string,",
+				"          customer_state as string,",
+				"          review_score as integer,",
+				"          delivery_days as integer,",
+				"          delay_days as integer,",
+				"          total_amount as string,",
+				"          order_date as date,",
+				"          data_issue_flag as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false,",
+				"     format: 'parquet') ~> source1",
+				"source(output(",
+				"          requested_date as date,",
+				"          api_date as date,",
+				"          base_currency as string,",
+				"          target_currency as string,",
+				"          exchange_rate as decimal(12,6),",
+				"          created_at as timestamp",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> source2",
+				"source1 select(mapColumn(",
+				"          order_id,",
+				"          customer_id,",
+				"          total_amount,",
+				"          order_date",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> select1",
+				"source2 select(mapColumn(",
+				"          requested_date,",
+				"          exchange_rate",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> select2",
+				"select1, select2 join(order_date == requested_date,",
+				"     joinType:'left',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> join1",
+				"join1 derive(total_amount_inr = coalesce(toDecimal(trim(total_amount),12,2), 0) * coalesce(exchange_rate, 1)) ~> derivedColumn1",
+				"derivedColumn1 select(mapColumn(",
+				"          order_id,",
+				"          order_date,",
+				"          customer_id,",
+				"          total_amount_usd = total_amount,",
+				"          exchange_rate,",
+				"          total_amount_inr",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> select3",
+				"select3 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          order_id as string,",
+				"          order_date as date,",
+				"          customer_id as string,",
+				"          total_amount_usd as decimal(12,2),",
+				"          exchange_rate as decimal(12,6),",
+				"          total_amount_inr as decimal(14,2)",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError') ~> sinkFactSales"
+			]
+		}
+	}
+}

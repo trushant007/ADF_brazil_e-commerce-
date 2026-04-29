@@ -1,0 +1,40 @@
+{
+	"name": "DS_agg_delivery_performance",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_db_brazil",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "order_date",
+				"type": "date"
+			},
+			{
+				"name": "avg_delivery_days",
+				"type": "decimal",
+				"precision": 10,
+				"scale": 2
+			},
+			{
+				"name": "avg_delay_days",
+				"type": "decimal",
+				"precision": 10,
+				"scale": 2
+			},
+			{
+				"name": "on_time_percentage",
+				"type": "decimal",
+				"precision": 5,
+				"scale": 2
+			}
+		],
+		"typeProperties": {
+			"schema": "dbo",
+			"table": "agg_delivery_performance"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

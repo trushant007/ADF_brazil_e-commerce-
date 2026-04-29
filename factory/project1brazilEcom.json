@@ -1,0 +1,15 @@
+{
+	"name": "project1brazilEcom",
+	"properties": {
+		"trustModeClaimForMi": {
+			"value": "Enabled",
+			"editable": true
+		}
+	},
+	"location": "eastus",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "47f57395-77f1-43d8-81c2-4d8097249777",
+		"tenantId": "174a536d-e472-47de-b56b-2e5b6ce47118"
+	}
+}

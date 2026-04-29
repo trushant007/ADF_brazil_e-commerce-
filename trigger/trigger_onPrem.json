@@ -1,0 +1,25 @@
+{
+	"name": "trigger_onPrem",
+	"properties": {
+		"description": "to check if new file is added",
+		"annotations": [],
+		"runtimeState": "Stopped",
+		"pipelines": [
+			{
+				"pipelineReference": {
+					"referenceName": "onPremToADLS",
+					"type": "PipelineReference"
+				}
+			}
+		],
+		"type": "ScheduleTrigger",
+		"typeProperties": {
+			"recurrence": {
+				"frequency": "Minute",
+				"interval": 15,
+				"startTime": "2026-04-06T09:34:00",
+				"timeZone": "India Standard Time"
+			}
+		}
+	}
+}

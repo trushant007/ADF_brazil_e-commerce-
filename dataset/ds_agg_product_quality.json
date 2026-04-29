@@ -1,0 +1,33 @@
+{
+	"name": "ds_agg_product_quality",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_db_brazil",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "product_id",
+				"type": "varchar"
+			},
+			{
+				"name": "avg_review_score",
+				"type": "decimal",
+				"precision": 3,
+				"scale": 2
+			},
+			{
+				"name": "total_reviews",
+				"type": "int",
+				"precision": 10
+			}
+		],
+		"typeProperties": {
+			"schema": "dbo",
+			"table": "agg_product_quality"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

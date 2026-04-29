@@ -1,0 +1,24 @@
+{
+	"name": "ds_exchange_api",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "doller_to_inr",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"order_date": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "RestResource",
+		"typeProperties": {
+			"relativeUrl": {
+				"value": "@concat(formatDateTime(dataset().order_date,'yyyy-MM-dd'), '?from=USD&to=INR')",
+				"type": "Expression"
+			}
+		},
+		"schema": []
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

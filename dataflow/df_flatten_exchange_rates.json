@@ -1,0 +1,103 @@
+{
+	"name": "df_flatten_exchange_rates",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "ds_read_exchangeRate",
+						"type": "DatasetReference"
+					},
+					"name": "source1"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "exchange_rates",
+						"type": "DatasetReference"
+					},
+					"name": "sinkToDatabaseTable"
+				}
+			],
+			"transformations": [
+				{
+					"name": "derivedColumn1"
+				},
+				{
+					"name": "setColumns"
+				},
+				{
+					"name": "AlterRow1"
+				},
+				{
+					"name": "aggregate1"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          amount as double,",
+				"          base as string,",
+				"          date as date,",
+				"          rates as (INR as double)",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false,",
+				"     rowUrlColumn: 'file_name',",
+				"     documentForm: 'documentPerLine') ~> source1",
+				"source1 derive(requested_date = toDate(regexExtract(file_name, '\\\\d{4}-\\\\d{2}-\\\\d{2}', 0)),",
+				"          api_date = date,",
+				"          base_currency = iif(isNull(base), 'USD', base),",
+				"          target_currency = 'INR',",
+				"          exchange_rate = toDecimal(rates.INR),",
+				"          created_at = currentTimestamp()) ~> derivedColumn1",
+				"derivedColumn1 select(mapColumn(",
+				"          requested_date,",
+				"          api_date,",
+				"          base_currency,",
+				"          target_currency,",
+				"          exchange_rate,",
+				"          created_at",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> setColumns",
+				"aggregate1 alterRow(upsertIf(1==1)) ~> AlterRow1",
+				"setColumns aggregate(groupBy(requested_date),",
+				"     base_currency = max(base_currency),",
+				"          target_currency = max(target_currency),",
+				"          exchange_rate = max(exchange_rate),",
+				"          created_at = max(created_at),",
+				"          api_date = max(api_date)) ~> aggregate1",
+				"AlterRow1 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          requested_date as date,",
+				"          api_date as date,",
+				"          base_currency as string,",
+				"          target_currency as string,",
+				"          exchange_rate as decimal(12,6),",
+				"          created_at as timestamp",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:true,",
+				"     keys:['requested_date'],",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          requested_date,",
+				"          base_currency,",
+				"          target_currency,",
+				"          exchange_rate,",
+				"          created_at,",
+				"          api_date",
+				"     )) ~> sinkToDatabaseTable"
+			]
+		}
+	}
+}

@@ -1,0 +1,232 @@
+{
+	"name": "SilverLayer",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "Order_bronze",
+						"type": "DatasetReference"
+					},
+					"name": "sourceOrderBronze"
+				},
+				{
+					"dataset": {
+						"referenceName": "ds_item_bronze",
+						"type": "DatasetReference"
+					},
+					"name": "sorceItem"
+				},
+				{
+					"dataset": {
+						"referenceName": "ds_review_bronze",
+						"type": "DatasetReference"
+					},
+					"name": "sourceReview"
+				},
+				{
+					"dataset": {
+						"referenceName": "ds_customer_bronze",
+						"type": "DatasetReference"
+					},
+					"name": "sourceCustomer"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "silver_order_enriched",
+						"type": "DatasetReference"
+					},
+					"name": "sink1"
+				},
+				{
+					"dataset": {
+						"referenceName": "Sliver_error",
+						"type": "DatasetReference"
+					},
+					"name": "sinkError"
+				}
+			],
+			"transformations": [
+				{
+					"name": "selectOrder"
+				},
+				{
+					"name": "selectItem"
+				},
+				{
+					"name": "selectReview"
+				},
+				{
+					"name": "selectCustomer"
+				},
+				{
+					"name": "filterOrder"
+				},
+				{
+					"name": "join1"
+				},
+				{
+					"name": "join2"
+				},
+				{
+					"name": "join3"
+				},
+				{
+					"name": "derivedColumn1"
+				},
+				{
+					"name": "select1"
+				},
+				{
+					"name": "derivedColumn2"
+				},
+				{
+					"name": "split1"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          order_id as string,",
+				"          customer_id as string,",
+				"          order_status as string,",
+				"          order_purchase_timestamp as string,",
+				"          order_approved_at as string,",
+				"          order_delivered_carrier_date as string,",
+				"          order_delivered_customer_date as string,",
+				"          order_estimated_delivery_date as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false) ~> sourceOrderBronze",
+				"source(output(",
+				"          order_id as string,",
+				"          order_item_id as string,",
+				"          product_id as string,",
+				"          seller_id as string,",
+				"          shipping_limit_date as string,",
+				"          price as string,",
+				"          freight_value as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false) ~> sorceItem",
+				"source(output(",
+				"          review_id as string,",
+				"          order_id as string,",
+				"          review_score as integer,",
+				"          review_comment_title as string,",
+				"          review_comment_message as string,",
+				"          review_creation_date as string,",
+				"          review_answer_timestamp as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false) ~> sourceReview",
+				"source(output(",
+				"          customer_id as string,",
+				"          customer_unique_id as string,",
+				"          customer_zip_code_prefix as string,",
+				"          customer_city as string,",
+				"          customer_state as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false) ~> sourceCustomer",
+				"sourceOrderBronze select(mapColumn(",
+				"          order_id,",
+				"          customer_id,",
+				"          order_status,",
+				"          order_purchase_timestamp,",
+				"          order_delivered_customer_date,",
+				"          order_estimated_delivery_date",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> selectOrder",
+				"sorceItem select(mapColumn(",
+				"          order_id,",
+				"          product_id,",
+				"          price,",
+				"          freight_value",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> selectItem",
+				"sourceReview select(mapColumn(",
+				"          order_id,",
+				"          review_score",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> selectReview",
+				"sourceCustomer select(mapColumn(",
+				"          customer_id,",
+				"          customer_city,",
+				"          customer_state",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> selectCustomer",
+				"selectOrder filter(order_status == 'delivered' && !isNull(order_delivered_customer_date)) ~> filterOrder",
+				"filterOrder, selectItem join(selectOrder@order_id == selectItem@order_id,",
+				"     joinType:'inner',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> join1",
+				"join1, selectCustomer join(selectOrder@customer_id == selectCustomer@customer_id,",
+				"     joinType:'inner',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> join2",
+				"join2, selectReview join(selectOrder@order_id == selectReview@order_id,",
+				"     joinType:'inner',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> join3",
+				"join3 derive(delivery_days = toDate(toString(order_delivered_customer_date,'yyyy-MM-dd')) - toDate(toString(order_purchase_timestamp,'yyyy-MM-dd')),",
+				"          delay_days = toDate(toString(order_delivered_customer_date,'yyyy-MM-dd')) - toDate(toString(order_estimated_delivery_date,'yyyy-MM-dd')),",
+				"          total_amount = toDecimal(trim(price),12,2)\r",
+				"+\r",
+				"toDecimal(trim(freight_value),12,2),",
+				"          order_date = toDate(order_purchase_timestamp),",
+				"          review_score = iif(isNull(review_score), 0, review_score)) ~> derivedColumn1",
+				"derivedColumn1 select(mapColumn(",
+				"          order_id = selectOrder@order_id,",
+				"          customer_id = selectOrder@customer_id,",
+				"          product_id,",
+				"          customer_city,",
+				"          customer_state,",
+				"          review_score,",
+				"          delivery_days,",
+				"          delay_days,",
+				"          total_amount,",
+				"          order_date",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> select1",
+				"select1 derive(delivery_days = iif(isNull(delivery_days) || delivery_days < 0, toInteger(null()), delivery_days),",
+				"          delay_days = iif(isNull(delay_days) || delay_days > 60, toInteger(null()), delay_days),",
+				"          data_issue_flag = iif(delivery_days < 0, 'Negative delivery',\r",
+				"    iif(delay_days > 60, 'Extreme delay',\r",
+				"    'Valid'))) ~> derivedColumn2",
+				"derivedColumn2 split(data_issue_flag == 'Valid',",
+				"     disjoint: false) ~> split1@(SilverLayer, Error)",
+				"split1@SilverLayer sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'parquet',",
+				"     umask: 0022,",
+				"     preCommands: [],",
+				"     postCommands: [],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> sink1",
+				"split1@Error sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'parquet',",
+				"     umask: 0022,",
+				"     preCommands: [],",
+				"     postCommands: [],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> sinkError"
+			]
+		}
+	}
+}

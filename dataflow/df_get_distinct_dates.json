@@ -1,0 +1,76 @@
+{
+	"name": "df_get_distinct_dates",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "silver_order_enriched",
+						"type": "DatasetReference"
+					},
+					"name": "fromOrderEnrich"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "distinct_dates",
+						"type": "DatasetReference"
+					},
+					"name": "distinctDates"
+				}
+			],
+			"transformations": [
+				{
+					"name": "selectOrderDate"
+				},
+				{
+					"name": "uniqueOrderDates"
+				},
+				{
+					"name": "select1"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          order_id as string,",
+				"          customer_id as string,",
+				"          product_id as string,",
+				"          customer_city as string,",
+				"          customer_state as string,",
+				"          review_score as integer,",
+				"          delivery_days as integer,",
+				"          delay_days as integer,",
+				"          total_amount as string,",
+				"          order_date as date,",
+				"          data_issue_flag as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false,",
+				"     format: 'parquet') ~> fromOrderEnrich",
+				"fromOrderEnrich select(mapColumn(",
+				"          order_date",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> selectOrderDate",
+				"selectOrderDate aggregate(groupBy(order_date),",
+				"     cnt = count(1)) ~> uniqueOrderDates",
+				"uniqueOrderDates select(mapColumn(",
+				"          order_date",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> select1",
+				"select1 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'parquet',",
+				"     umask: 0722,",
+				"     preCommands: [],",
+				"     postCommands: [],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> distinctDates"
+			]
+		}
+	}
+}

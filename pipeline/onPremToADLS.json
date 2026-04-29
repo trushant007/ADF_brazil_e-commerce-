@@ -1,0 +1,40 @@
+{
+	"name": "onPremToADLS",
+	"properties": {
+		"activities": [
+			{
+				"name": "FolderForEach",
+				"type": "ForEach",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@createArray('common','Orders','order_items_dataset','order_payments_dataset','order_reviews_dataset')",
+						"type": "Expression"
+					},
+					"activities": [
+						{
+							"name": "Execute Pipeline_child",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"policy": {
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "onPremToADLS_child",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true
+							}
+						}
+					]
+				}
+			}
+		],
+		"annotations": [],
+		"lastPublishTime": "2026-04-06T10:17:41Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

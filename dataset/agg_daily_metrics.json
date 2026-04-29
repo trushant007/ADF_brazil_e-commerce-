@@ -1,0 +1,45 @@
+{
+	"name": "agg_daily_metrics",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_db_brazil",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "order_date",
+				"type": "date"
+			},
+			{
+				"name": "total_orders",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "total_revenue_usd",
+				"type": "decimal",
+				"precision": 14,
+				"scale": 2
+			},
+			{
+				"name": "total_revenue_inr",
+				"type": "decimal",
+				"precision": 14,
+				"scale": 2
+			},
+			{
+				"name": "avg_order_value",
+				"type": "decimal",
+				"precision": 14,
+				"scale": 2
+			}
+		],
+		"typeProperties": {
+			"schema": "dbo",
+			"table": "agg_daily_metrics"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}
